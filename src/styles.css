@@ -239,3 +239,17 @@
 .chat-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
+
+.recording-pulse {
+  animation: recording-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes recording-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--destructive) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 7px color-mix(in oklab, var(--destructive) 0%, transparent);
+  }
+}
