@@ -33,9 +33,20 @@ export const Route = createFileRoute("/api/transcribe")({
           return new Response("Unsupported file type.", { status: 400 });
         }
 
+        // Name the part for the real container — the model infers format from it.
+        const ext =
+          ({
+            "audio/wav": "wav",
+            "audio/wave": "wav",
+            "audio/x-wav": "wav",
+            "audio/mpeg": "mp3",
+            "audio/mp4": "mp4",
+            "audio/webm": "webm",
+          })[file.type.split(";")[0] ?? ""] ?? "wav";
+
         const upstream = new FormData();
         upstream.append("model", "openai/gpt-4o-transcribe");
-        upstream.append("file", file, "recording.wav");
+        upstream.append("file", file, `recording.${ext}`);
         upstream.append("stream", "true");
 
         const response = await fetch(
