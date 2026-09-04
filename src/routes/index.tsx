@@ -156,8 +156,11 @@ function WorkMate() {
           <Composer
             value={input}
             busy={busy}
+            recording={recorder.state === "recording"}
+            transcribing={recorder.state === "transcribing"}
             onChange={setInput}
             onSubmit={handleSend}
+            onToggleRecording={handleToggleRecording}
             textareaRef={textareaRef}
           />
           <p className="mt-3 text-center text-xs text-muted-foreground">
