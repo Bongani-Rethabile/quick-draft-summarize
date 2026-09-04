@@ -5,12 +5,16 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import {
+  Loader2,
   Mail,
+  Mic,
   NotebookPen,
   RotateCcw,
   SendHorizontal,
   Sparkles,
+  Square,
 } from "lucide-react";
+import { useVoiceRecorder } from "@/hooks/use-voice-recorder";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -115,6 +119,26 @@ function WorkMate() {
     sendMessage({ text: trimmed });
   };
 
+  // Voice dictation: transcript is appended to whatever is already typed.
+  const dictationBaseRef = useRef("");
+  const recorder = useVoiceRecorder({
+    onTranscript: (transcript) => {
+      const base = dictationBaseRef.current;
+      setInput(base ? `${base.trimEnd()} ${transcript}` : transcript);
+    },
+    onError: (message) => toast.error("Voice notes", { description: message }),
+  });
+
+  const handleToggleRecording = () => {
+    if (recorder.state === "recording") {
+      void recorder.stop();
+      return;
+    }
+    if (recorder.state === "transcribing" || busy) return;
+    dictationBaseRef.current = input;
+    void recorder.start();
+  };
+
   const handleNewChat = () => {
     if (busy) return;
     setMessages([]);
@@ -152,8 +176,11 @@ function WorkMate() {
           <Composer
             value={input}
             busy={busy}
+            recording={recorder.state === "recording"}
+            transcribing={recorder.state === "transcribing"}
             onChange={setInput}
             onSubmit={handleSend}
+            onToggleRecording={handleToggleRecording}
             textareaRef={textareaRef}
           />
           <p className="mt-3 text-center text-xs text-muted-foreground">
@@ -281,17 +308,23 @@ function TypingIndicator() {
 function Composer({
   value,
   busy,
+  recording,
+  transcribing,
   onChange,
   onSubmit,
+  onToggleRecording,
   textareaRef,
 }: {
   value: string;
   busy: boolean;
+  recording: boolean;
+  transcribing: boolean;
   onChange: (value: string) => void;
   onSubmit: (text: string) => void;
+  onToggleRecording: () => void;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
 }) {
-  const canSend = value.trim().length > 0 && !busy;
+  const canSend = value.trim().length > 0 && !busy && !recording && !transcribing;
 
   return (
     <form
@@ -312,9 +345,35 @@ function Composer({
           }
         }}
         rows={1}
-        placeholder="Ask WorkMate to draft an email or summarize meeting notes…"
+        placeholder={
+          recording
+            ? "Listening — speak your meeting notes…"
+            : transcribing
+              ? "Transcribing your recording…"
+              : "Ask WorkMate to draft an email or summarize meeting notes…"
+        }
         className="max-h-40 flex-1 resize-none bg-transparent px-3 py-2.5 text-[0.9375rem] leading-relaxed outline-none placeholder:text-muted-foreground"
       />
+      <button
+        type="button"
+        onClick={onToggleRecording}
+        disabled={transcribing}
+        aria-label={recording ? "Stop recording" : "Record meeting notes"}
+        title={recording ? "Stop recording" : "Record meeting notes"}
+        className={`flex size-10 shrink-0 items-center justify-center rounded-full border transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
+          recording
+            ? "recording-pulse border-transparent bg-destructive text-destructive-foreground"
+            : "border-border bg-secondary text-secondary-foreground hover:bg-secondary/80"
+        }`}
+      >
+        {transcribing ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : recording ? (
+          <Square className="size-3.5" />
+        ) : (
+          <Mic className="size-4" />
+        )}
+      </button>
       <button
         type="submit"
         disabled={!canSend}
