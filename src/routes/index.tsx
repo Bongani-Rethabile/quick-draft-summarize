@@ -119,6 +119,26 @@ function WorkMate() {
     sendMessage({ text: trimmed });
   };
 
+  // Voice dictation: transcript is appended to whatever is already typed.
+  const dictationBaseRef = useRef("");
+  const recorder = useVoiceRecorder({
+    onTranscript: (transcript) => {
+      const base = dictationBaseRef.current;
+      setInput(base ? `${base.trimEnd()} ${transcript}` : transcript);
+    },
+    onError: (message) => toast.error("Voice notes", { description: message }),
+  });
+
+  const handleToggleRecording = () => {
+    if (recorder.state === "recording") {
+      void recorder.stop();
+      return;
+    }
+    if (recorder.state === "transcribing" || busy) return;
+    dictationBaseRef.current = input;
+    void recorder.start();
+  };
+
   const handleNewChat = () => {
     if (busy) return;
     setMessages([]);
