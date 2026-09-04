@@ -5,12 +5,16 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import {
+  Loader2,
   Mail,
+  Mic,
   NotebookPen,
   RotateCcw,
   SendHorizontal,
   Sparkles,
+  Square,
 } from "lucide-react";
+import { useVoiceRecorder } from "@/hooks/use-voice-recorder";
 
 export const Route = createFileRoute("/")({
   head: () => ({
