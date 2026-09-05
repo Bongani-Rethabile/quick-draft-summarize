@@ -153,47 +153,111 @@ function WorkMate() {
   const showWelcome = restored && messages.length === 0;
 
   return (
-    <div className="bg-paper flex h-dvh flex-col">
-      <Header messages={messages.length} busy={busy} onNewChat={handleNewChat} />
+    <div className="flex h-dvh bg-background">
+      <Sidebar onPick={handleSend} onNewChat={handleNewChat} busy={busy} />
 
-      <div ref={scrollRef} className="chat-scroll flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-3xl px-4 pb-6 sm:px-6">
-          {showWelcome ? (
-            <Welcome onPick={handleSend} />
-          ) : (
-            <div className="flex flex-col gap-5 py-6">
-              {messages.map((message) => (
-                <MessageBubble key={message.id} message={message} />
-              ))}
-              {status === "submitted" && <TypingIndicator />}
-            </div>
-          )}
+      <div className="bg-paper flex min-w-0 flex-1 flex-col">
+        <MobileBar
+          messages={messages.length}
+          busy={busy}
+          onNewChat={handleNewChat}
+        />
+
+        <div ref={scrollRef} className="chat-scroll flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-3xl px-4 pb-6 sm:px-8">
+            {showWelcome ? (
+              <Welcome onPick={handleSend} />
+            ) : (
+              <div className="flex flex-col gap-6 py-8">
+                {messages.map((message) => (
+                  <MessageBubble key={message.id} message={message} />
+                ))}
+                {status === "submitted" && <TypingIndicator />}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="border-t border-border/70 bg-card/80 backdrop-blur">
-        <div className="mx-auto w-full max-w-3xl px-4 pb-5 pt-4 sm:px-6">
-          <Composer
-            value={input}
-            busy={busy}
-            recording={recorder.state === "recording"}
-            transcribing={recorder.state === "transcribing"}
-            onChange={setInput}
-            onSubmit={handleSend}
-            onToggleRecording={handleToggleRecording}
-            textareaRef={textareaRef}
-          />
-          <p className="mt-3 text-center text-xs text-muted-foreground">
-            WorkMate can make mistakes — review drafts and summaries before
-            sending or sharing them.
-          </p>
+        <div className="border-t border-border/70 bg-background/70 backdrop-blur">
+          <div className="mx-auto w-full max-w-3xl px-4 pb-5 pt-4 sm:px-8">
+            <Composer
+              value={input}
+              busy={busy}
+              recording={recorder.state === "recording"}
+              transcribing={recorder.state === "transcribing"}
+              onChange={setInput}
+              onSubmit={handleSend}
+              onToggleRecording={handleToggleRecording}
+              textareaRef={textareaRef}
+            />
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              WorkMate can make mistakes — review drafts and summaries before
+              sending or sharing them.
+            </p>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function Header({
+function Sidebar({
+  onPick,
+  onNewChat,
+  busy,
+}: {
+  onPick: (text: string) => void;
+  onNewChat: () => void;
+  busy: boolean;
+}) {
+  return (
+    <aside className="hidden w-72 shrink-0 flex-col border-r border-border bg-sidebar px-4 py-5 lg:flex">
+      <div className="flex items-center gap-2.5 px-1">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <Sparkles className="size-4" />
+        </span>
+        <span className="font-display text-lg font-semibold leading-none">
+          WorkMate
+        </span>
+      </div>
+
+      <button
+        type="button"
+        onClick={onNewChat}
+        disabled={busy}
+        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <RotateCcw className="size-4" />
+        New chat
+      </button>
+
+      <div className="mt-8 px-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+        Quick tasks
+      </div>
+      <div className="mt-3 flex flex-col gap-1.5">
+        {TASK_STARTERS.map((task) => (
+          <button
+            key={task.label}
+            type="button"
+            onClick={() => onPick(task.message)}
+            disabled={busy}
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:bg-card disabled:opacity-50"
+          >
+            <task.icon className="size-4 shrink-0 text-primary" />
+            {task.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-auto rounded-xl border border-border bg-card p-3 text-xs leading-relaxed text-muted-foreground">
+        Tip: tap the microphone in the composer to dictate meeting notes out
+        loud.
+      </div>
+    </aside>
+  );
+}
+
+function MobileBar({
   messages,
   busy,
   onNewChat,
@@ -203,56 +267,54 @@ function Header({
   onNewChat: () => void;
 }) {
   return (
-    <header className="sticky top-0 z-10 border-b border-border/70 bg-background/80 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-3.5 sm:px-6">
-        <div className="flex items-baseline gap-2.5">
-          <span className="font-display text-2xl leading-none tracking-tight">
-            WorkMate
-          </span>
-          <span className="hidden rounded-full bg-accent px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-accent-foreground sm:inline-block">
-            AI workplace assistant
-          </span>
-        </div>
-        {messages > 0 && (
-          <button
-            type="button"
-            onClick={onNewChat}
-            disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <RotateCcw className="size-3.5" />
-            New chat
-          </button>
-        )}
+    <header className="flex items-center justify-between border-b border-border/70 bg-background/80 px-4 py-3 backdrop-blur lg:hidden">
+      <div className="flex items-center gap-2">
+        <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <Sparkles className="size-3.5" />
+        </span>
+        <span className="font-display text-base font-semibold">WorkMate</span>
       </div>
+      {messages > 0 && (
+        <button
+          type="button"
+          onClick={onNewChat}
+          disabled={busy}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-secondary disabled:opacity-50"
+        >
+          <RotateCcw className="size-3.5" />
+          New chat
+        </button>
+      )}
     </header>
   );
 }
 
 function Welcome({ onPick }: { onPick: (text: string) => void }) {
   return (
-    <div className="flex flex-col items-center pb-8 pt-14 text-center sm:pt-20">
-      <div className="flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
-        <Sparkles className="size-5" />
-      </div>
-      <h1 className="font-display mt-6 max-w-xl text-balance text-4xl leading-tight tracking-tight sm:text-5xl">
-        Hello — I'm WorkMate. What are we working on today?
+    <div className="flex flex-col items-start pb-10 pt-14 sm:pt-24">
+      <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+        AI workplace assistant
+      </span>
+      <h1 className="font-display mt-6 max-w-2xl text-balance text-4xl font-semibold leading-[1.1] sm:text-5xl">
+        What are we working on today?
       </h1>
       <p className="mt-4 max-w-md text-pretty text-muted-foreground">
-        I can draft professional emails or turn your raw meeting notes into a
-        clear, structured summary.
+        Draft a polished email or turn raw meeting notes into a clear,
+        structured summary.
       </p>
-      <div className="mt-9 grid w-full max-w-lg gap-3 sm:grid-cols-2">
+      <div className="mt-10 grid w-full gap-3 sm:grid-cols-2">
         {TASK_STARTERS.map((task) => (
           <button
             key={task.label}
             type="button"
             onClick={() => onPick(task.message)}
-            className="group rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+            className="group rounded-2xl border border-border bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-[0_12px_30px_-18px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
           >
-            <task.icon className="size-5 text-primary" />
-            <div className="mt-3 text-sm font-semibold">{task.label}</div>
-            <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+              <task.icon className="size-4" />
+            </span>
+            <div className="mt-4 text-sm font-semibold">{task.label}</div>
+            <div className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
               {task.hint}
             </div>
           </button>
@@ -261,6 +323,7 @@ function Welcome({ onPick }: { onPick: (text: string) => void }) {
     </div>
   );
 }
+
 
 function MessageBubble({ message }: { message: UIMessage }) {
   const isUser = message.role === "user";
